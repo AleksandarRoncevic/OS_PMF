@@ -5,7 +5,8 @@ import java.util.Random;
 
 public class Spil {
 
-    private ArrayList<Karta> spil; 
+    private ArrayList<Karta> spil;
+    
     public Spil() {
         spil = new ArrayList<Karta>();
         for(Boja b : Boja.values()) {
