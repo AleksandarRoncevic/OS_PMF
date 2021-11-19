@@ -1,3 +1,4 @@
+package vezbe2;
 /*
  * Data je implementacija beskonacnog spila karata (klase 'Spil' i 'Karta').
  * 
