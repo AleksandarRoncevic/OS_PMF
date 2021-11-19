@@ -1,0 +1,9 @@
+Data je implementacija beskonacnog spila karata (klase 'Spil' i 'Karta').
+
+Napraviti nit koja uzima jednu po jednu kartu iz spila i deli ih drugim
+nitima.
+
+Napraviti 12 niti koje predstavljaju igrace. One cekaju da dobiju kartu od
+dilera, koju potom ispisuju na ekranu i zavrsavaju svoj rad.
+
+Glavna nit kreira i pokrece sve ostale niti posle cega zavrsava svoj rad.
