@@ -46,7 +46,7 @@ public class Vezbe4 {
         //  n1.join();
         //  n2.join();
         //  n3.join();
-        Thread.sleep(1000);
+        Thread.sleep(100);
         
          System.out.println(brojac);
     }

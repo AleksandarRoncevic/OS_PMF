@@ -14,14 +14,13 @@ class Konobar extends Thread {
     @Override
     public void run() {
         Random r = new Random();
-        while(!interrupted()) {
-            try {
+        try {
+            while(!interrupted()) {
+                sleep(10*100);
                 kuhinja.prodajJelo(Obrok.values()[r.nextInt(3)]);
-                Thread.sleep(10*1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-
+        } catch (Exception e) {
+            //Izlazimo iz petlje i zavrsavamo rad
         }
     }
 }
@@ -42,13 +41,14 @@ class Kuvar extends Thread {
 
     @Override
     public void run() {
-        while(!interrupted()) {
-            kuhinja.dodajSastojak(sastojak);
-            try {
-                Thread.sleep(brzinaKuvanja*1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        try {
+            while(!interrupted()) {
+                sleep(brzinaKuvanja*100); //prvo "spavamo" jer je to koliko vremena mu je potrebno da napravi sastojak!!!!
+                kuhinja.dodajSastojak(sastojak); 
             }
+        } catch (Exception e) {
+                // e.printStackTrace();
+                //Zavrsavamo sa radom i izlazimo iz petlje
         }
     }
 }
@@ -61,8 +61,8 @@ class Kuhinja {
 
     private int promet;
 
-    public void ispisPrometa() {
-        System.out.println("Promet je "+ promet);
+    public int ispisPrometa() {
+        return promet;
     }
 
     public synchronized void dodajSastojak(Sastojak s) {
@@ -72,27 +72,44 @@ class Kuhinja {
            case POTAZ : litPotaza += 10; break;
            case POVRCE : kolPovrca += 1; break;
         }
+        System.out.println("Trenutno stanje u kuhinji je:");
+        System.out.print(" Kolicina povrca: "+ String.format("%.2f", kolPovrca));
+        System.out.print(" Kolicina hleba: "+ brHleb);
+        System.out.print(" Kolicina tofu: "+ brTofu);
+        System.out.println(" Kolicina potaza: "+ litPotaza);
         notifyAll();
     }
 
     public synchronized void prodajJelo(Obrok o) throws InterruptedException {
         switch (o) {
             case SENDVIC : {
-                while(brHleb < 2 && brTofu < 1 && kolPovrca < 0.1) wait();
+                while(brHleb < 2 || brTofu < 1 || kolPovrca < 0.1) {
+                    System.out.println(Thread.currentThread().getName()+ " čeka sendvič");
+                    wait();
+                };
                 brHleb -= 2; brTofu--; kolPovrca -= 0.1;
                 promet += o.cena;
+                System.out.println("Prodao sam sendvic");
                 break;
             }
             case POTAZ : {
-                while(litPotaza < 0.5 && brHleb < 1 ) wait();
+                while(litPotaza < 0.5 || brHleb < 1 ) {
+                    System.out.println(Thread.currentThread().getName()+ " čeka potaž");
+                    wait();
+                }
                 litPotaza -= 0.5; brHleb--;
-                promet += o.cena; 
+                promet += o.cena;
+                System.out.println("Prodao sam potaž");
                 break;
             }
             case TOFU : {
-                while(brTofu < 1 && kolPovrca < 0.3) wait();
-                brTofu--; kolPovrca -= 0.3;
+                while(brTofu < 1 || kolPovrca < 0.3) {
+                    System.out.println(Thread.currentThread().getName()+ " čeka potaž");
+                    wait();
+                }
+                brTofu--; kolPovrca -= 0.3; 
                 promet += o.cena; 
+                System.out.println("Prodao asm tofu");
                 break;
             }
         }
@@ -104,7 +121,9 @@ class Kuhinja {
 public class Program {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+        Thread.currentThread().setName("Gane");
+        System.out.println(Thread.currentThread().getName()+ " je otvorio restoran.");
         Kuhinja kuhinja = new Kuhinja();
 
         Kuvar Miki = new Kuvar("Miki",90, Sastojak.POVRCE,kuhinja);
@@ -115,15 +134,31 @@ public class Program {
 
         Kuvar[] kuvari = {Miki,Mica,Joki,Vule,Gule};
 
-        Konobar Rada = new Konobar("Rada",kuhinja);
-        Konobar Dara = new Konobar("Dara",kuhinja);
+        Konobar rada = new Konobar("Rada",kuhinja);
+        Konobar dara = new Konobar("Dara",kuhinja);
+
+        rada.start();
+        dara.start();
 
         for(Kuvar k : kuvari) {
             k.start();
         }
 
-        Rada.start();
-        Dara.start();
+        Thread.sleep(300*100); 
+        // ovo je trajanje poslovnog dana i samo je main
+        //uspavan, a ostale rade svoje
+
+        rada.interrupt(); dara.interrupt();
+        for(Kuvar k : kuvari) {
+            k.interrupt();
+        }
+        for(Kuvar k : kuvari) {
+            k.join();
+        }
+
+        rada.join(); dara.join();
+        
+        System.out.printf("Ukupan pazar: %d din%n", kuhinja.ispisPrometa());
     }
     
 }

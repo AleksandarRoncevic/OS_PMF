@@ -43,7 +43,7 @@ public class Vezbe3_1 {
         n1.start();
         n2.start();
 
-        Thread.sleep(1000);
+        Thread.sleep(100);
 
         n1.interrupt();
 
