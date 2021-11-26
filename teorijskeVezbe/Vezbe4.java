@@ -1,5 +1,5 @@
 package teorijskeVezbe;
-class Brojac {
+class Brojac2 {
     private int br = 0;
 
     public synchronized void inc() {
@@ -16,10 +16,10 @@ class Brojac {
     }
 }
 
-class Nit extends Thread {
-    private Brojac brojac;
+class Nit2 extends Thread {
+    private Brojac2 brojac;
 
-    public Nit(Brojac brojac) {
+    public Nit2(Brojac2 brojac) {
         this.brojac = brojac;
     }
     
@@ -33,11 +33,11 @@ class Nit extends Thread {
 
 public class Vezbe4 {
     public static void main(String[] args) throws InterruptedException {
-        Brojac brojac = new Brojac();
+        Brojac2 brojac = new Brojac2();
 
-        Nit n1 = new Nit(brojac);
-        Nit n2 = new Nit(brojac);
-        Nit n3 = new Nit(brojac);
+        Nit2 n1 = new Nit2(brojac);
+        Nit2 n2 = new Nit2(brojac);
+        Nit2 n3 = new Nit2(brojac);
 
          n1.start();
          n2.start();

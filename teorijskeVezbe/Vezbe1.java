@@ -16,22 +16,22 @@ public class Vezbe1{
 	}
 }
 
-class NitPozitivni extends Thread {
+// class NitPozitivni extends Thread {
 
-	@Override
-	public void run() {
-		for (int i = 1; i <= 10_000; i++) {
-			System.out.println(i);
-		}
-	}
-}
+// 	@Override
+// 	public void run() {
+// 		for (int i = 1; i <= 10_000; i++) {
+// 			System.out.println(i);
+// 		}
+// 	}
+// }
 
-class NitNegativni implements Runnable {
+// class NitNegativni implements Runnable {
 
-	@Override
-	public void run() {
-		for (int i = -1; i >= -10_000; i--) {
-			System.out.println(i);
-		}
-	}
-}
+// 	@Override
+// 	public void run() {
+// 		for (int i = -1; i >= -10_000; i--) {
+// 			System.out.println(i);
+// 		}
+// 	}
+// }

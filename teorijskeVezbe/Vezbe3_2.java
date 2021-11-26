@@ -13,11 +13,11 @@ class Brojac {
 	}
 }
 
-class Nit extends Thread {
+class Nit2 extends Thread {
 
 	private Brojac brojac;
 
-	public Nit(Brojac brojac) {
+	public Nit2(Brojac brojac) {
 		this.brojac = brojac;
 	}
 
@@ -36,9 +36,9 @@ public class Vezbe3_2 {
 
 		Brojac brojac = new Brojac();
 
-		Nit n1 = new Nit(brojac);
-		Nit n2 = new Nit(brojac);
-		Nit n3 = new Nit(brojac);
+		Nit2 n1 = new Nit2(brojac);
+		Nit2 n2 = new Nit2(brojac);
+		Nit2 n3 = new Nit2(brojac);
 		
 		n1.start();
 		n2.start();
