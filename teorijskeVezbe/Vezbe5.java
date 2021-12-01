@@ -28,7 +28,13 @@ class Proizvodjac extends Thread {
     private Bafer<String> bafer;
 
     public Proizvodjac() {
+    }
 
+    @Override
+    public void run() {
+        while(!interrupted()) {
+            
+        }
     }
 }
 
@@ -39,7 +45,7 @@ public class Vezbe5 {
 
     public static void main(String[] args) {
         for(int i = 0; i < BR_PROIZVĐAČA; i++) {
-
+            
         }
 
         for(int i = 0; i < BR_POTROŠAČA; i++) {

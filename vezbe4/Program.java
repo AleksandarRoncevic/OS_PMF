@@ -146,7 +146,7 @@ public class Program {
 
         Thread.sleep(300*100); 
         // ovo je trajanje poslovnog dana i samo je main
-        //uspavan, a ostale rade svoje
+        //uspavan, a ostale niti rade svoje
 
         rada.interrupt(); dara.interrupt();
         for(Kuvar k : kuvari) {
