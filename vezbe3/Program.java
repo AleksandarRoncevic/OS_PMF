@@ -6,8 +6,13 @@ import vezbe1.*;
 
 class IgracThr extends Thread {
 	
-	private Karta karta; //ovde ne treba volatile jer polje koristi samo IgracThr. 
-						//u prethodnom zadatku je polje karta su istovremeno!! koristili i Diler i Igrac
+	private Karta karta; 
+	/* 
+		Ovde ne treba volatile jer polje koristi samo IgracThr. 
+		u prethodnom zadatku je polje karta su istovremeno!! koristili i Diler i Igrac
+		a posto tada nismo koristili wait() i notify)(), to je bio jedini način da Igrač
+		"primeti" promenu stanja karta 
+	*/
 	private Talon talon;
 	private Spil spil;
 
@@ -36,12 +41,18 @@ class IgracThr extends Thread {
 	}
 
 	public void primiKartu() { 
-		//nije smeo this jer svaki igraci ima razlicitu-svoju this referencu
-		//pa onda ne bi bilo nista synced po pitanju primanja karata
+		/*
+			nije smeo this za sinhroni blok
+			jer svaki igraci ima razlicitu-svoju this referencu
+			pa onda ne bi bilo nista synced po pitanju primanja karata
+			mogli smo da stavimo bilo koji objekat ali je preporuka da to bude
+			objekat koji sigurno neće biti obrisan 
+		*/
 		synchronized (spil) {
 			this.karta = spil.uzmiOdGore();
 		}
 	}
+
 	public Karta imaKartu() {
 		return this.karta;
 	}
@@ -63,7 +74,9 @@ class Talon {
 		}	
 		brojKarata++;
 		if( brojKarata == 12 ) { 
-			//logicno kada svi stave kartu na talon, obavesti ih i nastavi sa izvrsavanjem
+			//logično kada svi stave kartu na talon, obavesti ih i nastavi sa izvršavanjem
+			//ovo je najlakši način da iskontrolišemo niti tako da se sačekaju pre 
+			//prelaska na neku sledeću etapu.
 			notifyAll();
 		}
 	}	
@@ -76,6 +89,10 @@ class Talon {
 		while(brojKarata < 12) {
 			wait();
 		};
+		/* ono što je bitno je da su sve niti dobile wait() unutar istog
+			sinhronog bloka (this referenca na Talon) i baš to je razlog zašto
+			kada budemo pozvali notifyAll ustvari budimo sve Igrače koji su čekali
+		*/
 	}
 	public synchronized boolean jeNajjaca(Karta karta) {
 		return karta.getRang().equals(najjaciRang);

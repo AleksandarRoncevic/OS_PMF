@@ -4,7 +4,6 @@ import java.util.Random;
 class Konobar extends Thread {
 
     private Kuhinja kuhinja;
-    // private String[] jela = {"potaz", "tofu", "sendvic"};
 
     public Konobar(String name, Kuhinja k) {
         setName(name);
@@ -43,7 +42,8 @@ class Kuvar extends Thread {
     public void run() {
         try {
             while(!interrupted()) {
-                sleep(brzinaKuvanja*100); //prvo "spavamo" jer je to koliko vremena mu je potrebno da napravi sastojak!!!!
+                sleep(brzinaKuvanja*100); 
+                //prvo "spavamo" jer je to koliko vremena mu je potrebno da napravi sastojak!!!!
                 kuhinja.dodajSastojak(sastojak); 
             }
         } catch (Exception e) {
@@ -78,9 +78,17 @@ class Kuhinja {
         System.out.print(" Kolicina tofu: "+ brTofu);
         System.out.println(" Kolicina potaza: "+ litPotaza);
         notifyAll();
+        //svi kuvari su sinhronizovani na this referencu Kuhinje kako se ne bi
+        //izgubili neki sastojci ako npr oba kuvara spreme tofu. Takođe 
+        //konobarice su takođe na istom tom bloku i one su obaveštene pomoću
+        //notifyAll svaki put kada se napravi neki sastojak, da provere
+        //da li je sada moguće da naprave porudžbinu koju čekaju
     }
 
     public synchronized void prodajJelo(Obrok o) throws InterruptedException {
+        /* Ovde ustvari govorimo konobaricama da sačekaju sastojke za porudžbinu.
+        Druga stvar koju postižemo jeste da ne mogu da se naprave 2 porudžbine za koje u zbiru
+        nemamo sastojke i odemo u minus sa količinom nekih proizvoda */
         switch (o) {
             case SENDVIC : {
                 while(brHleb < 2 || brTofu < 1 || kolPovrca < 0.1) {

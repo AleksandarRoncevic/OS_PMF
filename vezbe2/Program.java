@@ -40,6 +40,13 @@ class Spil {
 class Igrac extends Thread {
 
 	private volatile Karta karta;
+	//volatile govori računaru da ne kešira ovu vrednost i da svaki put
+	//ide do spore memorije da uzme vrednost. Ovo radimo jer inače igrač dok
+	// čeka na kartu bi proverio jednom vrednost karte i video da je null.
+	//Pošto je prazan while ne postoji način da se promeni vrednost karte unutar
+	//te petlje, a pošto ne koristimo wait() i notify() ni niko od "spolja" ne može
+	//da nam javi promenu. Zato koristeći volatile, u svakom loop-u procesor mora da 
+	//vadi informaciju iz spore memorije i onda će u jednom trenutku dovući novu vrednost
 
 	public Igrac(String ime) {
 		setName(ime);
