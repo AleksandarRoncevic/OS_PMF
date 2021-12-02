@@ -10,6 +10,14 @@ class IzvidjacPecurke extends Thread {
 		this.kamp = kamp;
 	}
 
+	/*
+		Izvidjač koji skuplja pečurke treba da se u slučaju uzbune vrati u kamp
+		što predstavljamo tako što u uslovu za for petlju imamo i !Thread.interrupted();
+		pored standardnog i < 25.
+		Takođe kada pokuša da donese pečurke i vidi da će prekoračiti broj donesenih drva
+		poziva se wait() i čekamo da se donesu drva i onda notifyAll obaveštava sve koji čekaju sa pečurkama
+		da pokušaju opet, pa će barem jedan ako ne više.
+	*/
 	@Override
 	public void run() {
 		for(int i = 0; i < 25 && !Thread.interrupted(); i++) {
@@ -29,6 +37,11 @@ class IzvidjacDrva implements Runnable {
 		this.kamp = kamp;
 	}
 
+	/* 
+		U zadatku je rečeno da se Izviđač koji skuplja drva ne obazire na uzbune
+		i to predstavljamo time što u for-u sada nemamo uslov !Thread.interrupted();
+		Ovako ne reagujemo na prekide i uopšte ih ne proveravamo. 
+	*/
 	@Override
 	public void run() {
 		for(int i = 0; i < 20; i++) {
@@ -52,20 +65,15 @@ public class Zadatak {
 		for(int i = 0; i < 12; i++) {
 			izvidjacPecurke[i] = new IzvidjacPecurke(suma, kamp);
 			izvidjacPecurke[i].setName("Pecurke "+ i);
-			izvidjacPecurke[i].setDaemon(true);
+			izvidjacPecurke[i].setDaemon(true); //pozadinski odnosno nekorisnički proces
 			izvidjacPecurke[i].start();
 
-			Runnable r = new IzvidjacDrva(suma, kamp);
+			Runnable r = new IzvidjacDrva(suma, kamp); //Runnable prosledimo u Thread konstruktor i tjt.
 			izvidjacDrva[i] = new Thread(r);
 			izvidjacDrva[i].setName("Drvar "+i);
-			izvidjacDrva[i].setDaemon(false);
+			izvidjacDrva[i].setDaemon(false); //korisnički proces
 			izvidjacDrva[i].start();
-			
-
-			izvidjacDrva[i].interrupt();
 		}
-
-		Thread.sleep(3000);
 
 		kamp.ispis();
 	}
@@ -77,8 +85,8 @@ class Kamp {
 	private int drva = 0;
 
 	public synchronized void donesiPecurke(int koliko) {
-		try {
-			while(pecurke + koliko  > drva) 
+		while(pecurke + koliko  > drva) 
+		try {	
 				wait();
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -94,7 +102,6 @@ class Kamp {
 
 	public void ispis() {
 		System.out.println("U kampu je skupljeno: "+ pecurke + " pecuraka i "+drva+" drva.");
-
 	}
 }
 
