@@ -40,7 +40,7 @@ class IzvidjacPecurke2 extends IzvidjacPecurke {
 
     @Override
     public void run() {
-       for(int i = 0; i < 25 && !Thread.interrupted(); i++) {
+       for(int i = 0; i < 25 && !interrupted(); i++) {
             int koliko = suma.traziPecurke();
             kamp.donesiPecurke(koliko);
        }

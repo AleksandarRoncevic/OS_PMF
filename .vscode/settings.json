@@ -1,0 +1,6 @@
+{
+  "java.project.referencedLibraries": [
+    "lib/**/*.jar",
+    "/Users/aleksandar/Documents/Fakultet/III godina/OS/os.jar"
+  ]
+}
