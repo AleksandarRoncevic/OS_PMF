@@ -38,16 +38,14 @@ import os.simulation.Thread;
  */
 class Pristup {
 
-	public Pristup(int max, int brD) {
-		this.maxTezina = max;
-		this.maxBrojDece = brD;
-	};
+	// public Pristup(int max, int brD) {
+	// 	this.maxTezina = max;
+	// 	this.maxBrojDece = brD;
+	// };
 
-	private double maxTezina;
-	private int maxBrojDece;
 	private int brDecaka = 0;
 	private int brDevojcica = 0;
-	private double tezina;
+
 
 	private Semaphore maxTezinaSemaphore = new Semaphore(300);
 	private Semaphore maxDeceSemaphore = new Semaphore(5);
@@ -126,7 +124,7 @@ public class DecaITrambolina extends Application {
 
 	protected final int MAX_TEZINA = 300;
 	protected final int MAX_BR_DECE = 5;
-	protected Pristup pristup = new Pristup(MAX_TEZINA,MAX_BR_DECE);
+	protected Pristup pristup = new Pristup();
 	
 	protected enum Pol {
 		MUSKI, ZENSKI;
