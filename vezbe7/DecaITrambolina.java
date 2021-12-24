@@ -1,11 +1,10 @@
-package vezbe6;
-import os.simulation.Container;
+package vezbe7;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Semaphore;
+
 import os.simulation.Application;
 import os.simulation.AutoCreate;
+import os.simulation.Container;
 import os.simulation.Item;
 import os.simulation.Operation;
 import os.simulation.Thread;
@@ -43,118 +42,92 @@ class Pristup {
 		this.maxTezina = max;
 		this.maxBrojDece = brD;
 	};
+
 	private double maxTezina;
 	private int maxBrojDece;
 	private int brDecaka = 0;
 	private int brDevojcica = 0;
 	private double tezina;
-	private boolean decaciPrednost;
 
-	private Lock brava = new ReentrantLock();
-	private Condition deca = brava.newCondition();
-	private Condition decaci = brava.newCondition();
-	private Condition devojcice = brava.newCondition();
+	private Semaphore maxTezinaSemaphore = new Semaphore(300);
+	private Semaphore maxDeceSemaphore = new Semaphore(5);
 
+	private Semaphore mutexDecaci = new Semaphore(1);
+	private Semaphore mutexDevojcice = new Semaphore(1);
+
+
+	//A)
 	public void uvediDete(int t) throws InterruptedException {
-		brava.lock();
-		try{
-			while(tezina + t > maxTezina) {
-				deca.await();
-			}
-			tezina += t;
-		} finally {
-			brava.unlock();
-		}
+		maxTezinaSemaphore.acquire(t);
 	}
+
 	public void izvediDete(int t) {
-		brava.lock();
-		try{
-			deca.signalAll();
-			tezina -= t;
-		} finally {
-			brava.unlock();
-		}
+		maxTezinaSemaphore.release(t);
 	}
 
+	//B)
 	public void uvediDete2() throws InterruptedException {
-		brava.lock();
-		try{
-			while(brDecaka >= maxBrojDece) {
-				deca.await();
-			}
-			brDecaka++;
-		} finally {
-			brava.unlock();
-		}
-	}
-	public void izvediDete2() {
-		brava.lock();
-		try{
-			deca.signal();
-			brDecaka--;
-		} finally {
-			brava.unlock();
-		}
-	}
-
-	public void uvediDecaka() throws InterruptedException {
-		brava.lock();
-		try{
-			while(brDevojcica > 0 || !decaciPrednost || brDecaka >= 5) {
-				decaci.await();
-			}
-			brDecaka++;
-		} finally {
-			brava.unlock();
-		}
+		maxDeceSemaphore.acquire();
 	};
-	public void izvediDecaka() {
-		brava.lock();
-		try{
-			brDecaka--;
-			if(brDecaka == 0) {
-				devojcice.signalAll(); 
-				decaciPrednost = false;
-			}
-			if(brDecaka == 4) decaci.signal();
-		} finally {
-			brava.unlock();
-		}
-	}
+	public void izvediDete2() {
+		maxDeceSemaphore.release();
+	};
 
-	public void uvediDevojcicu() throws InterruptedException {
-		brava.lock();
-		try{
-			while(brDecaka > 0 || decaciPrednost || brDevojcica >= 5) {
-				devojcice.await();
-			}
-			brDevojcica++;
-		} finally {
-			brava.unlock();
-		}
-	}
-	public void izvediDevojcicu() {
-		brava.lock();
+	//C)
+	public void uvediDecaka() throws InterruptedException {
+		mutexDecaci.acquireUninterruptibly();
 		try {
-			brDevojcica--;
-			if(brDevojcica == 0) {
-				decaci.signalAll();
-				decaciPrednost = true;
+			brDecaka++;
+			if(brDecaka == 1) {
+				mutexDevojcice.acquireUninterruptibly();
 			}
-			if(brDevojcica == 4) devojcice.signal();
 		} finally {
-			brava.unlock();
+			mutexDecaci.release();
 		}
 	}
 
+	public void izvediDecaka() {
+		mutexDecaci.acquireUninterruptibly();
+		try {
+			brDecaka--;
+			if(brDecaka == 0) 
+				mutexDevojcice.release();
+		} finally {
+			mutexDecaci.release();
+		}
+	}
 
-};
+	public void uvediDevojcicu() {
+		mutexDevojcice.acquireUninterruptibly();
+		try {
+			brDevojcica++;
+			if(brDevojcica == 1) mutexDecaci.acquireUninterruptibly();
+		} finally {
+			mutexDevojcice.release();
+		}
+	}
+
+	public void izvediDevojcicu() {
+		mutexDevojcice.acquireUninterruptibly();
+		try{
+			brDevojcica--;
+			if(brDevojcica == 0) 
+				mutexDecaci.release();
+		} finally {
+			mutexDevojcice.release();
+		}
+	}
+
+}
+
+
+
 public class DecaITrambolina extends Application {
 
 	protected final int MAX_TEZINA = 300;
 	protected final int MAX_BR_DECE = 5;
-
 	protected Pristup pristup = new Pristup(MAX_TEZINA,MAX_BR_DECE);
+	
 	protected enum Pol {
 		MUSKI, ZENSKI;
 	}
@@ -165,7 +138,6 @@ public class DecaITrambolina extends Application {
 		private final Pol pol = randomElement(Pol.values());
 		private final int tezina = randomInt(25, 60);
 
-
 		public Dete() {
 			setName(String.format("%4.1f kg", 1.0 * tezina));
 			setColor(pol == Pol.MUSKI ? AZURE : ROSE);
@@ -174,24 +146,23 @@ public class DecaITrambolina extends Application {
 		@Override
 		protected void step() {
 			odmara();
-			// Sinhronizacija
-			// Blokirati decu koja ne smeju trenutno da skacu
-			try{
-				// pristup.uvediDete(this.tezina);
-				// pristup.uvediDete2();
-				if(this.pol == Pol.MUSKI) pristup.uvediDecaka();
-				else pristup.uvediDevojcicu();
-
+			try {
+				if(this.pol == Pol.MUSKI) 
+					pristup.uvediDecaka();
+				else
+					pristup.uvediDevojcicu();
+				
+				pristup.uvediDete2(); //paziti na redosled!
 				try{
-					skace();
+				skace();
 				} finally {
-					// pristup.izvediDete(this.tezina);
-					// pristup.izvediDete2();
-					if(this.pol == Pol.MUSKI) pristup.izvediDecaka();
-					else pristup.izvediDevojcicu();
+				pristup.izvediDete2();
+					if(this.pol == Pol.MUSKI) 
+					pristup.izvediDecaka();
+				else
+					pristup.izvediDevojcicu();
 				}
 			} catch(InterruptedException e) {}
-
 		}
 	}
 
@@ -206,7 +177,7 @@ public class DecaITrambolina extends Application {
 	protected final Container main      = column(van, unutra);
 	protected final Operation dete      = init().container(van).name("Дете %d").color(ORANGE);
 
-	protected final Operation odmaranje = duration("15±2").text("Одмара").textAfter("Чека");
+	protected final Operation odmaranje = duration("7±2").text("Одмара").textAfter("Чека");
 	protected final Operation skakanje  = duration("5±2").text("Скаче").container(unutra).update(this::azuriraj);
 
 	protected void odmara() {
