@@ -7,8 +7,8 @@ class Bafer<T> {
 
     protected final List<T> lista;
 
-    public Bafer() {
-        this.lista = new ArrayList<>();
+    public Bafer(int size) {
+        this.lista = new ArrayList<>(size);
     }
 
     public synchronized boolean jePrazan() {
@@ -25,7 +25,7 @@ class Bafer<T> {
 }
 
 class Proizvodjac extends Thread {
-    private Bafer<String> bafer;
+    // private Bafer<String> bafer;
 
     public Proizvodjac() {
     }
