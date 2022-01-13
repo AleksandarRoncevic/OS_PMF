@@ -1,6 +1,5 @@
 package vezbaZaKolok;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,6 +96,7 @@ public class LedenaSuma extends Application {
 		private double currTezina;
 		private int brojMomaka;
 		private int brojDevojaka;
+		private int brojOsoba;
 		
 		// A)
 		public void ulaziMomak() throws InterruptedException {
@@ -123,8 +123,9 @@ public class LedenaSuma extends Application {
 		public void ulaziOsoba(double t) throws InterruptedException {
 			brava.lock();
 			try{
-				while(currTezina + t > 300)
+				while(currTezina + t > 300 || brojOsoba == 4)
 					maxTezina.await();
+				brojOsoba++;
 				currTezina += t; //dete uslo
 			} finally {
 				brava.unlock();
@@ -135,6 +136,7 @@ public class LedenaSuma extends Application {
 			brava.lock();
 			try{
 				currTezina -= t;
+				brojOsoba--;
 				maxTezina.signalAll();
 			} finally {
 				brava.unlock();
@@ -178,8 +180,77 @@ public class LedenaSuma extends Application {
 
 	}
 
+	protected final class LockA {
 
-	protected Pristup p = new Pristup();
+		protected Lock bravaUlaz = new ReentrantLock();
+		protected Condition momakUlazCondition = bravaUlaz.newCondition();
+		protected Condition devojkaUlazCondition = bravaUlaz.newCondition();
+
+		protected Lock bravaIzlaz = new ReentrantLock();
+		protected Condition momakIzlazCondition = bravaIzlaz.newCondition();
+		protected Condition devojkaIzlazCondition = bravaIzlaz.newCondition();		
+
+		private int brojMomakaUlaz;
+		private int brojDevojakaUlaz;
+
+		private int brojMomakaIzlaz;
+		private int brojDevojakaIzlaz;
+
+		public void momakUlazi() throws InterruptedException {
+			bravaUlaz.lock();
+			try{
+				brojMomakaUlaz++;
+				while(brojDevojakaUlaz == 0)
+					devojkaUlazCondition.await();
+				brojDevojakaUlaz--;
+				momakUlazCondition.signal();
+			} finally {
+				bravaUlaz.unlock();
+			}
+		}
+
+		public void devojkaUlazi() throws InterruptedException {
+			bravaUlaz.lock();
+			try{
+				brojDevojakaUlaz++;
+				while(brojMomakaUlaz == 0)
+					momakUlazCondition.await();
+				brojMomakaUlaz--;
+				devojkaUlazCondition.signal();
+			} finally {
+				bravaUlaz.unlock();
+			}
+		}
+
+		public void momakIzlazi() throws InterruptedException {
+			bravaIzlaz.lock();
+			try {
+				brojMomakaIzlaz++;
+				while(brojDevojakaIzlaz == 0 )
+					devojkaIzlazCondition.await();
+				brojDevojakaIzlaz--;
+				momakIzlazCondition.signal();
+			} finally {
+				bravaIzlaz.unlock();
+			}
+		}
+
+		public void devojkaIzlazi() throws InterruptedException {
+			bravaIzlaz.lock();
+			try{
+				brojDevojakaIzlaz++;
+				while(brojMomakaIzlaz == 0) 
+					momakIzlazCondition.await();
+				brojMomakaIzlaz--;
+				devojkaIzlazCondition.signal();
+			} finally {
+				bravaIzlaz.unlock();
+			}
+		}
+	}
+
+	// protected Pristup p = new Pristup();
+	protected LockA p = new LockA();
 
 	@AutoCreate
 	protected class Momak extends Thread {
@@ -191,20 +262,21 @@ public class LedenaSuma extends Application {
 		protected void run() {
 			obuvaSe();
 			try{
-				// p.ulaziMomak2();
+				p.momakUlazi();
 				// p.ulaziOsoba(tezina);
-				p.ulaziOsoba2();
+				// p.ulaziOsoba2();
 			} catch(InterruptedException e) {
 				stopGracefully();
 			}
 			kliza();
-			// try{
-			// 	p.izlaziOsoba(tezina);
-			// 	p.izlaziMomak2();
-			// } catch(InterruptedException e) {
-			// 	stopGracefully();
-			// }
-			p.izlaziOsoba2();
+			try{
+				p.momakIzlazi();
+				// p.izlaziOsoba(tezina);
+				// p.izlaziMomak2();
+			} catch(InterruptedException e) {
+				stopGracefully();
+			}
+			// p.izlaziOsoba2();
 			izuvaSe();
 		}
 	}
@@ -219,26 +291,28 @@ public class LedenaSuma extends Application {
 		protected void run() {
 			obuvaSe();
 			try{
+				p.devojkaUlazi();
 				// p.ulaziDevojka2();
 				// p.ulaziOsoba(tezina);
-				p.ulaziOsoba2();
+				// p.ulaziOsoba2();
 			} catch (InterruptedException e) {
 				stopGracefully();
 			}
 			kliza();
-			// try{
-			// 	p.izlaziOsoba(tezina);
-			// 	p.izlaziDevojka2();
-			// } catch(InterruptedException e) {
-			// 	stopGracefully();
-			// }
-			p.izlaziOsoba2();
+			try{
+				// p.izlaziOsoba(tezina);
+				p.devojkaIzlazi();
+				// p.izlaziDevojka2();
+			} catch(InterruptedException e) {
+				stopGracefully();
+			}
+			// p.izlaziOsoba2();
 			izuvaSe();
 		}
 	}
 
 	protected final int MAX_TEZINA = 0;
-	protected final int MAX_BR = 4;
+	protected final int MAX_BR = 0;
 	protected final int MAX_CIPELA = 0;
 	protected final boolean JEDAN_POL = false;
 
